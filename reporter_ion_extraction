@@ -1,0 +1,62 @@
+from pyteomics import mzml
+import pandas as pd
+
+#Read the Toppic idenfication file
+def csv_read ():
+    data1 = pd.read_csv ('Toppic_input.csv')
+    df1 = pd.DataFrame (data1)
+    return df1
+
+df1 = csv_read()
+msscan = df1['ScanNumber']
+rows = df1.shape[0]
+
+#Read the MS data
+with mzml.read('input.mzML') as reader:
+#Extract the reporter ion peak
+    for spectrum in reader:
+        index = spectrum['index']
+        intensity = spectrum['intensity array']
+        mz = spectrum['m/z array']
+        record = [0,0,0,0,0,0]
+#Filter out the highest intensity in tolerance
+        for i in range(len(mz)):
+            if (mz[i]>126.11) & (mz[i]<126.14):
+                if intensity[i]>record[0]:
+                    record[0] = intensity[i]
+            if (mz[i]>127.11) & (mz[i]<127.14):
+                if intensity[i]>record[1]:
+                    record[1] = intensity[i]
+            if (mz[i]>128.11) & (mz[i]<128.14):
+                if intensity[i]>record[2]:
+                    record[2] = intensity[i]
+            if (mz[i]>129.11) & (mz[i]<129.14):
+                if intensity[i]>record[3]:
+                    record[3] = intensity[i]
+            if (mz[i]>130.12) & (mz[i]<130.15):
+                if intensity[i]>record[4]:
+                    record[4] = intensity[i]
+            if (mz[i]>131.12) & (mz[i]<131.15):
+                if intensity[i]>record[5]:
+                    record[5] = intensity[i]
+#Add the reporter ion information       
+        for j in range(rows):
+            if index == j:
+                df1.iloc[j,31] = record[0]
+                df1.iloc[j,32] = record[1]
+                df1.iloc[j,33] = record[2]
+                df1.iloc[j,34] = record[3]
+                df1.iloc[j,35] = record[4]
+                df1.iloc[j,36] = record[5]
+df1.to_csv('output.csv')
+df1.head()
+
+#Make a graph for the proteoform quantification
+import matplotlib.pyplot as plt
+import numpy as np
+id = int(input('Please input the proteoform ID you want to quantify'))
+MS_plot = [df1.loc[id,'126'],df1.loc[id,'127'],df1.loc[id,'128'],df1.loc[id,'129'],df1.loc[id,'130'],df1.loc[id,'131']]
+N = 6
+ind = np.arange(N)
+p1 = plt.bar(ind, MS_plot, 0.2)
+plt.xticks(ind, ('126', '127', '128', '129', '130','131'))
